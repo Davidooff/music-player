@@ -11,11 +11,15 @@ async function registration(login, password, callback){
                 })
                 let found = await userModel.findById(login).exec()
                 if (found) {
-                    callback(found)
+                    callback(null, found)
+                } else{
+                    callback("Can't check on complit", null)
                 }
             }
         })
+    } else{
+        callback("User already exist", null)
     }
 }
 
-registration('david', '123', (found) => console.log('Ok'))
+module.exports.reg = registration;
