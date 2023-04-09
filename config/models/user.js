@@ -5,6 +5,11 @@ const userSchema = new Schema(
     { 
         _id: String,
         password: String,
+        library: [{
+            originalName: String,
+            platform: String,
+            link: String,
+        }],
         playLists: [{
             name: String,
             songs: [
