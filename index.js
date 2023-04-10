@@ -1,5 +1,5 @@
 const express = require('express');
-const registration = require('./src/registration');
+const auth = require('./src/auth');
 const token = require('./src/token');
 const plTool = require('./src/play-lists')
 const sc = require('./src/soundcloud')
@@ -11,18 +11,37 @@ app.use(express.urlencoded({ extended: true }));
 
 app.post('/api/registration', (req, res) => {
     let {login, password} = req.body;
-    registration.reg(login, password, (err, user) => {
+    auth.reg(login, password, (err, user) => {
         if (!err) {
-            res.send({token: createToken(user._id)});
+            res.send({ success: true, token: token.createToken(user._id) });
+        } else {
+            res.send({ success: false, msg: err})
         }
     });
 });
 
+app.get('/api/login', (req, res) => {
+    let { _id, password } = req.body;
+    auth.login(_id, password, (err, result) => {
+        if(!err && result){
+            res.send({ success: true, token: token.createToken(_id) });
+        } else if (!err && !result) {
+            res.send({ success: false, msg: 'Incorect login or password' })
+        } else {
+            res.send({ success: false, msg: 'Server error' })
+        }
+    })
+})
+
 app.post('/api/add-to-library', (req, res) => {
     let { userToken, url, platform, name } = req.body;
-    let _id = token.checkToken(userToken)
+    let _id = token.checkToken(userToken).id
     if (_id) {
+        console.log(_id);
         plTool.addToLibrary(_id, url, name, platform)
+        res.send({ success: true })
+    } else {
+        res.send({ success: false, msg: 'Incorect token' })
     }
 })
 
@@ -32,6 +51,24 @@ app.get('/api/play', (req, res) => {
         stream.pipe(res)
     })
 });
+
+app.get('/api/library', async (req, res) => {
+    let { _id, startFrom, endAt } = req.body;
+    let lib = await plTool.getLibrary(_id)
+    console.log(lib);
+    if (endAt && startFrom){
+        endAt = lib.length - endAt
+        if (endAt > 0) {
+            lib = lib.slice(startFrom, endAt)
+            res.send(lib)
+        } else {
+            lib = lib.slice(startFrom)
+            res.send(lib)
+        }
+    } else{
+        res.send(lib)
+    }
+})
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);

@@ -32,6 +32,9 @@ const userSchema = new Schema(
                         callback(error, hash)
                     });
                 });
+            },
+            compare(reqPassword, password, callback){
+                bcrypt.compare(reqPassword, password, callback(err, result));
             }
         }
     }

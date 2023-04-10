@@ -1,8 +1,8 @@
 const userModel = require('../config/models/user')
 
-function addToLibrary(_id, url, name, platform){
-    userModel.update(
-        { _id: _id }, 
+async function addToLibrary(id, url, name, platform){
+    await userModel.updateOne(
+        { _id: id }, 
         { 
             $push: { library: {
                 'originalName': name,
@@ -10,20 +10,27 @@ function addToLibrary(_id, url, name, platform){
                 'platform': platform
             }} 
         },
+        { upsert: true }
     );
 }
 
-function deleteFromLibrary(_id, url, name, platform){
-    userModel.update( // select your doc in moongo
-    { _id: _id }, // your query, usually match by _id
-    { $pull: { library: { $elemMatch: { 
-        'originalName': name,
-        'link': url,
-        'platform': platform
-     } } } }, // item(s) to match from array you want to pull/remove
-    { multi: false } // set this to true if you want to remove multiple elements.
-)
+async function deleteFromLibrary(id, url, name, platform){
+    await userModel.updateOne( // select your doc in moongo
+        { _id: id }, // your query, usually match by _id
+        { $pull: { library: { $elemMatch: { 
+            'originalName': name,
+            'link': url,
+            'platform': platform
+        } } } }, // item(s) to match from array you want to pull/remove
+        { upsert: true }
+    )
+}
+
+async function getLibrary(_id){
+    let user = await userModel.findOne({'_id': _id}).lean()
+    return user.library;
 }
 
 module.exports.addToLibrary = addToLibrary;
 module.exports.deleteFromLibrary = deleteFromLibrary;
+module.exports.getLibrary = getLibrary;

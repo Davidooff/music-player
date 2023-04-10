@@ -22,4 +22,10 @@ async function registration(login, password, callback){
     }
 }
 
+async function login(reqId, reqPassword, callback){
+    let { password } = await userModel.findById(reqId).exec()
+    userModel.compare(reqPassword, password, callback(err, result));
+}
+
 module.exports.reg = registration;
+module.exports.login = login;
