@@ -1,9 +1,10 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { createAudioPlayer, createAudioResource, joinVoiceChannel } = require('@discordjs/voice');
-const { MessageEmbed } = require('discord.js');
+const { MessageEmbed, InviteTargetType } = require('discord.js');
 const UserModel = require('../../../config/models/user')
 const QueueModel = require('../../../config/models/queue')
 const soundcloud = require('../../soundcloud')
+const end = require('./player-events/end')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -36,13 +37,13 @@ module.exports = {
                 ephemeral: true
             });
         }
-        interaction.reply(JSON.stringify(lib[0]))
-
-        let quen = await QueueModel.findById(interaction.guild.id)
-
-        if (quen) {
-            await quen.deleteOne()
+        
+        try {
+            await QueueModel.deleteOne({_id: interaction.guild.id})
+        } catch {
+            console.log('No quen');
         }
+
         await QueueModel.create({
             '_id': interaction.guild.id,
             'channelId': voiceChannel.id,
@@ -58,22 +59,29 @@ module.exports = {
 
         // Create an audio player and resource
         const player = createAudioPlayer();
-        player.addListener("stateChange", (oldOne, newOne) => {
-            let model = QueueModel.findById(interaction.guild.id)
-            model.queue.shift();
+        player.addListener("stateChange", async (oldOne, newOne) => {
+            if (newOne.status == "idle") {
+                console.log('end');
+                let model = await QueueModel.findById(interaction.guild.id).exec();
+                model.queue.shift();
+                await model.save()
+                end(player, interaction.guild.id)
+            }   
         });
         soundcloud.streamURL(lib[0].link, stream => {
+            
             const resource = createAudioResource(stream);
             connection.subscribe(player);
             player.play(resource);
         })
-
+        
+        interaction.reply(JSON.stringify(lib[0]))
         // Play the audio
-
+        
         // Send a message to confirm the audio is playing
         // const embed = new MessageEmbed()
         //     .setColor('BLUE')
         //     .setDescription(`Now playing: ${url}`);
-        // interaction.reply({ embeds: [embed] });
+        // interaction.reply({ embeds: [embed] });       
     },
 };
