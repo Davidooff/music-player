@@ -3,7 +3,10 @@ const auth = require('./src/auth');
 const token = require('./src/token');
 const plTool = require('./src/play-lists')
 const sc = require('./src/soundcloud')
+require('./src/discord/main')
+const skip = require('./src/discord/express-functions/express-skip')
 const app = express();
+
 const port = 3000;
 
 app.use(express.json());
@@ -70,6 +73,13 @@ app.get('/api/library', async (req, res) => {
     }
 })
 
+app.get('/api/discord/skip/:id', async function(req, res) {
+    
+    // Retrieve the tag from our URL path
+    var id = req.params.id;
+    skip(id)
+    
+});
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
   });

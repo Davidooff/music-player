@@ -29,7 +29,7 @@ module.exports = {
             const resource = createAudioResource(stream);
             connection.subscribe(player);
             player.play(resource);
-            interaction.reply('Now playing: ' + lib.queue[0])
+            // interaction.reply('Now playing: ' + lib.queue[0])
         })
         player.addListener("stateChange", async (oldOne, newOne) => {
             if (newOne.status == "idle") {

@@ -1,4 +1,25 @@
 const userModel = require('../config/models/user')
+const QueueModel = require('../config/models/queue')
+
+async function addToQueue(id, url, name, platform){
+    await QueueModel.updateOne(
+        { _id: id }, 
+        { 
+            $push: { library: {
+                'originalName': name,
+                'link': url,
+                'platform': platform
+            }} 
+        },
+        { upsert: true }
+    );
+}
+
+async function shiftQueue(id){
+    let queueObj = await QueueModel.findById(id).exec();
+    queueObj.queue.shift();
+    await queueObj.save()
+}
 
 async function addToLibrary(id, url, name, platform){
     await userModel.updateOne(
@@ -30,7 +51,8 @@ async function getLibrary(_id){
     let user = await userModel.findOne({'_id': _id}).lean()
     return user.library;
 }
-
+module.exports.addToQueue = addToQueue;
+module.exports.shiftQueue = shiftQueue;
 module.exports.addToLibrary = addToLibrary;
 module.exports.deleteFromLibrary = deleteFromLibrary;
 module.exports.getLibrary = getLibrary;

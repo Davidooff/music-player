@@ -1,6 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { createAudioPlayer, createAudioResource, joinVoiceChannel } = require('@discordjs/voice');
-const { MessageEmbed, InviteTargetType } = require('discord.js');
 const UserModel = require('../../../config/models/user')
 const QueueModel = require('../../../config/models/queue')
 const soundcloud = require('../../soundcloud')
@@ -17,16 +16,16 @@ module.exports = {
     async execute(interaction) {
         // console.log(generateDependencyReport());  // -- check DependencysX
         const login = interaction.options.getString('login');
+
         const voiceChannel = interaction.member.voice.channel;
-        // Check if the user is in a voice channel
-
-
-        if (!voiceChannel) {
+        if (!voiceChannel) { // Check if the user is in a voice channel
             return interaction.reply({
                 content: 'You need to be in a voice channel to use this command!',
                 ephemeral: true
             });
         }
+
+
         
         let lib = await UserModel.findById(login).lean();
         lib = lib.library
