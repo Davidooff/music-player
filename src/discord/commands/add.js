@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const QueueModel = require('../../../config/models/queue')
 const playList = require('../../play-lists')
 const scdl = require('soundcloud-downloader').default
@@ -14,7 +14,17 @@ module.exports = {
 	async execute(interaction) {
 		const URL = interaction.options.getString('url');
         let { title } = await scdl.getInfo(URL)
-        interaction.reply(title + " - Added to queue")
+        const exampleEmbed = new EmbedBuilder()
+            .setColor(0x0099FF)
+            .setTitle(title)
+            .setURL(URL)
+            // .setAuthor({ name: 'Some name', iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
+            .setDescription('Added to queue')
+            .setThumbnail('https://media.discordapp.net/attachments/992797049701552180/1026821354978291873/DiscordMusic.gif')
+            .setTimestamp()
+            // .setFooter({ text: 'Some footer text here', iconURL: 'https://i.imgur.com/AfFp7pu.png' });
+        
+        interaction.reply({embeds: [exampleEmbed]})
         const voiceChannel = interaction.member.voice.channel;
         if (!voiceChannel) { // Check if the user is in a voice channel
             return interaction.reply({
@@ -22,18 +32,8 @@ module.exports = {
                 ephemeral: true
             });
         }
-        await QueueModel.updateOne(
-            { _id: interaction.guild.id }, 
-            { 
-                $push: { queue: {
-                    'originalName': title,
-                    'link': URL,
-                    'platform': 'soundcloud'
-                }} 
-            },
-            { upsert: true }
-        );
-        playList.addToQueue(interaction.guild.id, URL, )
+        
+        await playList.addToQueue(interaction.guild.id, URL, title, "SoundCloud")
 
 	},
 };

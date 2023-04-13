@@ -4,6 +4,8 @@ const queueSchema = new Schema(
     {
         _id: String, //guild id
         channelId: String,
+        msgID: String,
+        channelID: String,
         queue: [
             {
                 originalName: String,
