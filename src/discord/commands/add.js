@@ -1,5 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const QueueModel = require('../../../config/models/queue')
+const playList = require('../../play-lists')
+const scdl = require('soundcloud-downloader').default
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -11,7 +13,8 @@ module.exports = {
             .setRequired(true)),
 	async execute(interaction) {
 		const URL = interaction.options.getString('url');
-
+        let { title } = await scdl.getInfo(URL)
+        interaction.reply(title + " - Added to queue")
         const voiceChannel = interaction.member.voice.channel;
         if (!voiceChannel) { // Check if the user is in a voice channel
             return interaction.reply({
@@ -23,13 +26,14 @@ module.exports = {
             { _id: interaction.guild.id }, 
             { 
                 $push: { queue: {
-                    'originalName': 'name',
+                    'originalName': title,
                     'link': URL,
                     'platform': 'soundcloud'
                 }} 
             },
             { upsert: true }
         );
+        playList.addToQueue(interaction.guild.id, URL, )
 
 	},
 };

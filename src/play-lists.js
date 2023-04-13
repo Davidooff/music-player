@@ -15,10 +15,11 @@ async function addToQueue(id, url, name, platform){
     );
 }
 
-async function shiftQueue(id){
+async function shiftQueue(id){ // Geting queu by id of guild and returning next obj(music) in queu
     let queueObj = await QueueModel.findById(id).exec();
     queueObj.queue.shift();
     await queueObj.save()
+    return queueObj.queue[0]
 }
 
 async function addToLibrary(id, url, name, platform){

@@ -4,6 +4,7 @@ const { MessageEmbed } = require('discord.js');
 const UserModel = require('../../../config/models/user')
 const QueueModel = require('../../../config/models/queue')
 const soundcloud = require('../../soundcloud')
+const playList = require('../../play-lists')
 const end = require('./player-events/end')
 
 module.exports = {
@@ -11,11 +12,10 @@ module.exports = {
         .setName('skip')
         .setDescription('skip audio from a lib'),
     async execute(interaction) {
-        let lib = await QueueModel.findById(interaction.guild.id).exec();
-        lib.queue.shift();
-        await lib.save()
+        let next = await playList.shiftQueue(interaction.guild.id)
+
         const player = createAudioPlayer()
-        if (lib.queue.length == 0 ) {
+        if (!next) {
             try{
                 const connection = getVoiceConnection(interaction.guild.id)
                 connection.unsubscribe()
@@ -23,9 +23,10 @@ module.exports = {
                 return interaction.reply('No music in lib')
             }
         }
+        interaction.reply(JSON.stringify(next))
         const connection = getVoiceConnection(interaction.guild.id)
 
-        soundcloud.streamURL(lib.queue[0].link, (stream) => {
+        soundcloud.streamURL(next.link, (stream) => {
             const resource = createAudioResource(stream);
             connection.subscribe(player);
             player.play(resource);
@@ -34,10 +35,8 @@ module.exports = {
         player.addListener("stateChange", async (oldOne, newOne) => {
             if (newOne.status == "idle") {
                 console.log('end');
-                let lib = await QueueModel.findById(interaction.guild.id).exec();
-                lib.queue.shift();
-                await lib.save()
-                end(player, interaction.guild.id)
+                let next = await playList.shiftQueue(interaction.guild.id)
+                end(player, interaction.guild.id, next)
             }   
         });
     }, 

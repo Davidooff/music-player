@@ -3,6 +3,7 @@ const { createAudioPlayer, createAudioResource, joinVoiceChannel } = require('@d
 const UserModel = require('../../../config/models/user')
 const QueueModel = require('../../../config/models/queue')
 const soundcloud = require('../../soundcloud')
+const playList = require('../../play-lists')
 const end = require('./player-events/end')
 
 module.exports = {
@@ -27,8 +28,7 @@ module.exports = {
 
 
         
-        let lib = await UserModel.findById(login).lean();
-        lib = lib.library
+        let lib = await playList.getLibrary(login)
         console.log(lib);
         if (!lib) {
             return interaction.reply({
@@ -61,14 +61,11 @@ module.exports = {
         player.addListener("stateChange", async (oldOne, newOne) => {
             if (newOne.status == "idle") {
                 console.log('end');
-                let model = await QueueModel.findById(interaction.guild.id).exec();
-                model.queue.shift();
-                await model.save()
-                end(player, interaction.guild.id)
+                let next = await playList.shiftQueue(interaction.guild.id)
+                end(player, interaction.guild.id, next)
             }   
         });
         soundcloud.streamURL(lib[0].link, stream => {
-            
             const resource = createAudioResource(stream);
             connection.subscribe(player);
             player.play(resource);

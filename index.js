@@ -78,8 +78,8 @@ app.get('/api/discord/skip/:id', async function(req, res) {
     // Retrieve the tag from our URL path
     var id = req.params.id;
     skip(id)
-    
+    res.send({success: true})
 });
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
-  });
+});
